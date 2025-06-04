@@ -1,0 +1,35 @@
+name: Build and Deploy to Octopus
+
+on:
+  push:
+    branches: [ '*' ]  # Triggers on all branches
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Get full git history
+    
+    - name: Package Application
+      run: |
+        zip -r JiraTestApp.1.0.${{ github.run_number }}.zip app.js package.json
+    
+    - name: Push to Octopus
+      uses: OctopusDeploy/push-package-action@v3
+      with:
+        api_key: ${{ secrets.OCTOPUS_API_KEY }}
+        server: https://536b-220-235-183-211.ngrok-free.app
+        space: Default
+        packages: JiraTestApp.1.0.${{ github.run_number }}.zip
+    
+    - name: Push Build Information
+      uses: OctopusDeploy/push-build-information-action@v3
+      with:
+        api_key: ${{ secrets.OCTOPUS_API_KEY }}
+        server: https://536b-220-235-183-211.ngrok-free.app
+        space: Default
+        packages: JiraTestApp
+        version: 1.0.${{ github.run_number }}
